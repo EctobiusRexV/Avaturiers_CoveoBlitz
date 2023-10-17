@@ -5,6 +5,7 @@ import dataclasses
 import json
 import os
 
+
 import cattrs
 import websockets
 

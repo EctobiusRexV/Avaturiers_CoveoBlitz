@@ -1,5 +1,8 @@
 from game_message import *
 from actions import *
+from random import choice
+import math
+import numpy
 
 
 class Bot:
@@ -11,12 +14,18 @@ class Bot:
         """
         Here is where the magic happens, for now the moves are not very good. I bet you can do better ;)
         """
-        if game_message.cannon.orientation >= 45:
-            self.direction = -1
-        elif game_message.cannon.orientation <= -45:
-            self.direction = 1
+
+        cannon = game_message.cannon
+        meteor = choice(game_message.meteors)
+
+        norme_projectile = game_message.constants.rockets.speed
+        norme_meteor = math.sqrt(meteor.velocity.x**2 + meteor.velocity.y**2)
+
+        orientation_meteor = math.arctan(meteor.velocity.y / meteor.velocity.x)
+
+
 
         return [
-            RotateAction(angle=15 * self.direction),
+            LookAtAction(target=Vector()),
             ShootAction(),
         ]
