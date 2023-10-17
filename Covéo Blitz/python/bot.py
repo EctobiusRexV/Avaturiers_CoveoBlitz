@@ -17,26 +17,40 @@ class Bot:
         """
 
         # cannon = game_message.cannon
-        # meteor = choice(game_message.meteors)
+        #meteor = meteor
         #
         # norme_projectile = game_message.constants.rockets.speed
         # norme_meteor = math.sqrt(meteor.velocity.x ** 2 + meteor.velocity.y ** 2)
         #
         # orientation_meteor = math.arctan(meteor.velocity.y / meteor.velocity.x)
-
+        meteor = choice(game_message.meteors)
         #Système d'équation non linéaire à résoudre
         def func(x):
-            return [((game_message.constants.rockets.speed * np.cos(x[0]) - choice(game_message.meteors).velocity.x) *
-                     x[1] + game_message.cannon.position.x - choice(game_message.meteors).position.x),
+            return [((game_message.constants.rockets.speed * np.cos(x[0]) - meteor.velocity.x) *
+                     x[1] + game_message.cannon.position.x - meteor.position.x),
 
-                    ((game_message.constants.rockets.speed * np.sin(x[0]) - choice(game_message.meteors).velocity.y) *
-                     x[1] + game_message.cannon.position.y - choice(game_message.meteors).position.y)]
+                    ((game_message.constants.rockets.speed * np.sin(x[0]) - meteor.velocity.y) *
+                     x[1] + game_message.cannon.position.y - meteor.position.y)]
 
-        root = fsolve(func, [-4, 4])
-
+        root = fsolve(func, [1, 10])
+        print("Meteor position", game_message.meteors[0].position)
+        print("Meteor velocity", game_message.meteors[0].velocity)
+        print("Cannon position", game_message.cannon.position)
+        print("Cannon initial velocity", game_message.constants.rockets.speed)
+        print("Roots", root)
+        # if game_message.cannon.cooldown == 0:
         return [
-            RotateAction(angle=root[0]),
-            ShootAction(),
-        ]
+                #LookAtAction(target=Vector(game_message.meteors[0].position.x, game_message.meteors[0].position.y)),
+                LookAtAction(target=Vector(meteor.velocity.x*root[1]+meteor.position.x, meteor.velocity.y*root[1]+meteor.position.y)),
+                ShootAction(),
+            ]
+        # else:
+        #     return [
+        #         LookAtAction(target=Vector(meteor.velocity.x*root[1]+meteor.position.x, meteor.velocity.y*root[1]+meteor.position.y)),
+        #         #LookAtAction(target=Vector(game_message.meteors[0].position.x, game_message.meteors[0].position.y)),
+        #     ]
+
+
+
 
 
