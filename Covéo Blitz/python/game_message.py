@@ -17,7 +17,7 @@ class GameMessage:
     score: int
 
 
-@dataclass(eq=True, frozen=True)
+@dataclass(eq=True, frozen=False)
 class Vector:
    x: float 
    y: float 
