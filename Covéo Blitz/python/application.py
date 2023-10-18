@@ -36,7 +36,8 @@ async def game_loop(websocket: websockets.WebSocketServerProtocol, bot: Bot):
             break
 
         game_message: GameMessage = cattrs.structure(json.loads(message), GameMessage)
-        print(f"Playing tick {game_message.tick}")
+        #print("\n")
+        #print(f"Playing tick {game_message.tick}")
 
         if game_message.lastTickErrors:
             print(f'Errors during last tick : {game_message.lastTickErrors}')
@@ -47,7 +48,7 @@ async def game_loop(websocket: websockets.WebSocketServerProtocol, bot: Bot):
             "actions": [dataclasses.asdict(action) for action in bot.get_next_move(game_message)]
         }
 
-        print(json.dumps(payload))
+        #print(json.dumps(payload))
 
         await websocket.send(json.dumps(payload))
 
