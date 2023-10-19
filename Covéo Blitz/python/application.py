@@ -49,6 +49,7 @@ async def game_loop(websocket: websockets.WebSocketServerProtocol, bot: Bot):
         }
 
         #print(json.dumps(payload))
+        #print(game_message.score)
 
         await websocket.send(json.dumps(payload))
 

@@ -8,7 +8,7 @@ from scipy.optimize import fsolve
 
 
 class Bot:
-    shot_meteors = []
+    shot_meteors = {}
     predicted_meteors = []
     game_message = None
 
@@ -36,15 +36,16 @@ class Bot:
         impact_position = Vector(x=meteor.velocity.x * time + meteor.position.x,
                                  y=meteor.velocity.y * time + meteor.position.y)
         main_angle = math.atan2(meteor.velocity.y, meteor.velocity.x)
-        if meteor.meteorType == MeteorType.Large:
+        if meteor.meteorType.Large:
             for angle in [main_angle + math.pi / 10, main_angle - math.pi / 10]:
                 predict_id = "0" if len(self.predicted_meteors) == 0 else str(int(self.predicted_meteors[-1].id) + 1)
                 velocity = Vector(x=8 * math.cos(angle), y=8 * math.sin(angle))
                 position = Vector(x=impact_position.x - velocity.x * time, y=impact_position.y - velocity.y * time)
                 self.predicted_meteors.append(
-                    Meteor(id=predict_id, position=position, velocity=velocity, size=math.ceil(time), meteorType=MeteorType.Medium))
+                    Meteor(id=predict_id, position=position, velocity=velocity, size=math.ceil(time),
+                           meteorType=MeteorType.Medium))
         elif meteor.meteorType.Medium:
-            for angle in [main_angle + math.pi / 6, main_angle,  main_angle - math.pi / 6]:
+            for angle in [main_angle + math.pi / 6, main_angle, main_angle - math.pi / 6]:
                 predict_id = "0" if len(self.predicted_meteors) == 0 else str(int(self.predicted_meteors[-1].id) + 1)
                 velocity = Vector(x=13 * math.cos(angle), y=13 * math.sin(angle))
                 position = Vector(x=impact_position.x - velocity.x * time, y=impact_position.y - velocity.y * time)
@@ -60,12 +61,14 @@ class Bot:
             meteor.position.x += meteor.velocity.x
             meteor.position.y += meteor.velocity.y
             meteor.size -= 1
-            if meteor.size == 0:
+            if meteor.size == 0 and meteor.meteorType == MeteorType.Medium:
                 if meteor.id in self.shot_meteors:
-                    self.shot_meteors.remove(meteor.id)
                     for real_meteor in game_message.meteors:
-                        if math.isclose(real_meteor.velocity.x, meteor.velocity.x, abs_tol=1.0) and math.isclose(real_meteor.velocity.y, meteor.velocity.y, abs_tol=1.0):
-                            self.shot_meteors.append(real_meteor.id)
+                        if math.isclose(real_meteor.velocity.x, meteor.velocity.x, abs_tol=1.0) and math.isclose(
+                                real_meteor.velocity.y, meteor.velocity.y, abs_tol=1.0):
+                            self.shot_meteors[real_meteor.id] = self.shot_meteors[meteor.id]
+                            self.predict_meteors(real_meteor, self.shot_meteors[real_meteor.id])
+                    del self.shot_meteors[meteor.id]
                 self.predicted_meteors.remove(meteor)
         game_message.meteors.extend(self.predicted_meteors)
         self.game_message = game_message
@@ -84,17 +87,18 @@ class Bot:
             print(game_message.score)
             if meteor.meteorType == MeteorType.Medium:
                 self.predict_meteors(meteor, root[1])
-            self.shot_meteors.append(meteor.id)
-            # for meteor in game_message.meteors:
-            #     if meteor.id in self.shot_meteors:
-            #         print('\033[92m'+"id:", meteor.id)
-            #         print("size:", meteor.meteorType)
-            #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y,'\033[0m')
-            #     else:
-            #         print("id:", meteor.id)
-            #         print("size:", meteor.meteorType)
-            #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y)
-            # print()
+            self.shot_meteors[meteor.id] = root[1]
+            for meteor in game_message.meteors:
+                if meteor.id in self.shot_meteors:
+                    print('\033[92m'+"id:", meteor.id)
+                    print("size:", meteor.meteorType)
+                    print("speed:", meteor.velocity.x, ",", meteor.velocity.y,'\033[0m')
+                else:
+                    print("id:", meteor.id)
+                    print("size:", meteor.meteorType)
+                    print("speed:", meteor.velocity.x, ",", meteor.velocity.y)
+            print()
+
             return [
                 LookAtAction(target=Vector(meteor.velocity.x * root[1] + meteor.position.x,
                                            meteor.velocity.y * root[1] + meteor.position.y)),
