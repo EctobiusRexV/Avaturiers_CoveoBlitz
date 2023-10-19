@@ -36,12 +36,21 @@ class Bot:
         impact_position = Vector(x=meteor.velocity.x * time + meteor.position.x,
                                  y=meteor.velocity.y * time + meteor.position.y)
         main_angle = math.atan2(meteor.velocity.y, meteor.velocity.x)
-        for angle in [main_angle + math.pi / 10, main_angle - math.pi / 10]:
-            predict_id = "0" if len(self.predicted_meteors) == 0 else str(int(self.predicted_meteors[-1].id) + 1)
-            velocity = Vector(x=8 * math.cos(angle), y=8 * math.sin(angle))
-            position = Vector(x=impact_position.x - velocity.x * time, y=impact_position.y - velocity.y * time)
-            self.predicted_meteors.append(
-                Meteor(id=predict_id, position=position, velocity=velocity, size=math.ceil(time), meteorType=MeteorType.Medium))
+        if meteor.meteorType == MeteorType.Large:
+            for angle in [main_angle + math.pi / 10, main_angle - math.pi / 10]:
+                predict_id = "0" if len(self.predicted_meteors) == 0 else str(int(self.predicted_meteors[-1].id) + 1)
+                velocity = Vector(x=8 * math.cos(angle), y=8 * math.sin(angle))
+                position = Vector(x=impact_position.x - velocity.x * time, y=impact_position.y - velocity.y * time)
+                self.predicted_meteors.append(
+                    Meteor(id=predict_id, position=position, velocity=velocity, size=math.ceil(time), meteorType=MeteorType.Medium))
+        elif meteor.meteorType.Medium:
+            for angle in [main_angle + math.pi / 6, main_angle,  main_angle - math.pi / 6]:
+                predict_id = "0" if len(self.predicted_meteors) == 0 else str(int(self.predicted_meteors[-1].id) + 1)
+                velocity = Vector(x=13 * math.cos(angle), y=13 * math.sin(angle))
+                position = Vector(x=impact_position.x - velocity.x * time, y=impact_position.y - velocity.y * time)
+                self.predicted_meteors.append(
+                    Meteor(id=predict_id, position=position, velocity=velocity, size=math.ceil(time),
+                           meteorType=MeteorType.Small))
 
     def get_next_move(self, game_message: GameMessage):
         """
@@ -72,7 +81,8 @@ class Bot:
 
         root = fsolve(func, [1, 10])
         if game_message.cannon.cooldown == 0:
-            if meteor.meteorType == MeteorType.Large:
+            print(game_message.score)
+            if meteor.meteorType == MeteorType.Medium:
                 self.predict_meteors(meteor, root[1])
             self.shot_meteors.append(meteor.id)
             # for meteor in game_message.meteors:
@@ -82,7 +92,7 @@ class Bot:
             #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y,'\033[0m')
             #     else:
             #         print("id:", meteor.id)
-            #         print("size:", meteor.size)
+            #         print("size:", meteor.meteorType)
             #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y)
             # print()
             return [
