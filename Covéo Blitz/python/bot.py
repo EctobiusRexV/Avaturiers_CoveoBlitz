@@ -88,15 +88,15 @@ class Bot:
             if meteor.meteorType == MeteorType.Medium:
                 self.predict_meteors(meteor, root[1])
             self.shot_meteors[meteor.id] = root[1]
-            for meteor in game_message.meteors:
-                if meteor.id in self.shot_meteors:
-                    print('\033[92m'+"id:", meteor.id)
-                    print("size:", meteor.meteorType)
-                    print("speed:", meteor.velocity.x, ",", meteor.velocity.y,'\033[0m')
-                else:
-                    print("id:", meteor.id)
-                    print("size:", meteor.meteorType)
-                    print("speed:", meteor.velocity.x, ",", meteor.velocity.y)
+            # for meteor in game_message.meteors:
+            #     if meteor.id in self.shot_meteors:
+            #         print('\033[92m'+"id:", meteor.id)
+            #         print("size:", meteor.meteorType)
+            #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y,'\033[0m')
+            #     else:
+            #         print("id:", meteor.id)
+            #         print("size:", meteor.meteorType)
+            #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y)
             print()
 
             return [
