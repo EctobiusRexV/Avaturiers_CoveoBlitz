@@ -85,7 +85,7 @@ class Bot:
         root = fsolve(func, [1, 10])
         if game_message.cannon.cooldown == 0:
             print(game_message.score)
-            if meteor.meteorType == MeteorType.Medium:
+            if meteor.meteorType == MeteorType.Large:
                 self.predict_meteors(meteor, root[1])
             self.shot_meteors[meteor.id] = root[1]
             # for meteor in game_message.meteors:
@@ -97,7 +97,7 @@ class Bot:
             #         print("id:", meteor.id)
             #         print("size:", meteor.meteorType)
             #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y)
-            print()
+            # print()
 
             return [
                 LookAtAction(target=Vector(meteor.velocity.x * root[1] + meteor.position.x,
