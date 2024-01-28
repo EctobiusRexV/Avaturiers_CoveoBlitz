@@ -46,6 +46,9 @@ async def game_loop(websocket: websockets.WebSocketServerProtocol, bot: Bot):
             "actions": [dataclasses.asdict(action) for action in bot.get_next_move(game_message)]
         }
 
+        if game_message.tick == 999:
+            print(game_message.score)
+
         await websocket.send(json.dumps(payload))
 
 

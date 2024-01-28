@@ -95,12 +95,13 @@ class Bot:
             target = Vector(meteor.velocity.x * root[1] + meteor.position.x, meteor.velocity.y * root[1] + meteor.position.y)
             i = 0
             while not meteor_in_shootable_range(root[0], target):
-                i += 1
                 if i > len(game_message.meteors):
-                    print("Help!")
+                    print(game_message.tick)
                     return []
                 self.shot_meteors.append(meteor.id)
-                target = calculate_future_position(game_message, meteor)
+                root = calculate_future_position(game_message, meteor)
+                target = Vector(meteor.velocity.x * root[1] + meteor.position.x, meteor.velocity.y * root[1] + meteor.position.y)
+                i += 1
             if self.should_predict_meteor(meteor):
                 self.predict_meteors(meteor, root[1])
             self.shot_meteors.append(meteor.id)
