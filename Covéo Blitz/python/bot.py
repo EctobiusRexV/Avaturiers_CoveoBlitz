@@ -1,34 +1,45 @@
-import game_message
 from game_message import *
 from actions import *
-from random import choice
 import math
 import numpy as np
 from scipy.optimize import fsolve
 
 
+def calculate_future_position(game_message: GameMessage, meteor: Meteor):
+    def func(x):
+        return [((game_message.constants.rockets.speed * np.cos(x[0]) - meteor.velocity.x) *
+                 x[1] + game_message.cannon.position.x - meteor.position.x),
+
+                ((game_message.constants.rockets.speed * np.sin(x[0]) - meteor.velocity.y) *
+                 x[1] + game_message.cannon.position.y - meteor.position.y)]
+    return fsolve(func, [1, 10])
+
+
+def meteor_in_shootable_range(angle: float, position: Vector) -> bool:
+    return (10 < position.y < 790) and (-math.pi * 0.45 < angle < math.pi * 0.45)
+
+
 class Bot:
     shot_meteors = []
     predicted_meteors = []
-    game_message = None
 
     def __init__(self):
         self.direction = 1
         print("Initializing your super mega duper bot")
 
-    def choose_meteor(self):
-        if len(self.game_message.meteors) == 0:
+    def choose_meteor(self, game_message: GameMessage):
+        if len(game_message.meteors) == 0:
             return None
-        target = self.game_message.meteors[0]
-        for meteor in self.game_message.meteors:
+        target = game_message.meteors[0]
+        for meteor in game_message.meteors:
             valid = True
             for shot_id in self.shot_meteors:
                 if meteor.id == shot_id:
                     valid = False
             if valid:
-                if meteor.meteorType == game_message.MeteorType.Small:
+                if meteor.meteorType == MeteorType.Small:
                     return meteor
-                elif meteor.meteorType == game_message.MeteorType.Medium:
+                elif meteor.meteorType == MeteorType.Medium:
                     target = meteor
                 if meteor.meteorType == target.meteorType and meteor.position.x > target.position.x:
                     target = meteor
@@ -55,10 +66,7 @@ class Bot:
                     Meteor(id=predict_id, position=position, velocity=velocity, size=math.ceil(time),
                            meteorType=MeteorType.Small))
 
-    def get_next_move(self, game_message: GameMessage):
-        """
-        Here is where the magic happens, for now the moves are not very good. I bet you can do better ;)
-        """
+    def update_predicted_meteors(self, game_message: GameMessage):
         for meteor in self.predicted_meteors:
             meteor.position.x += meteor.velocity.x
             meteor.position.y += meteor.velocity.y
@@ -72,49 +80,30 @@ class Bot:
                             self.shot_meteors.append(real_meteor.id)
                 self.predicted_meteors.remove(meteor)
         game_message.meteors.extend(self.predicted_meteors)
-        self.game_message = game_message
-        meteor = self.choose_meteor()
+        return self.choose_meteor(game_message)
+
+    def should_predict_meteor(self, meteor: Meteor):
+        return meteor.meteorType == MeteorType.Large and meteor.id not in self.shot_meteors
+
+    def get_next_move(self, game_message: GameMessage):
+        meteor = self.update_predicted_meteors(game_message)
         if meteor is None:
             return []
 
-        # Système d'équation non linéaire à résoudre
-        def func(x):
-            return [((game_message.constants.rockets.speed * np.cos(x[0]) - meteor.velocity.x) *
-                     x[1] + game_message.cannon.position.x - meteor.position.x),
-
-                    ((game_message.constants.rockets.speed * np.sin(x[0]) - meteor.velocity.y) *
-                     x[1] + game_message.cannon.position.y - meteor.position.y)]
-
         if game_message.cannon.cooldown == 0:
-            # print(game_message.score)
-            root = fsolve(func, [1, 10])
-
-            target = Vector(meteor.velocity.x * root[1] + meteor.position.x,
-                            meteor.velocity.y * root[1] + meteor.position.y)
+            root = calculate_future_position(game_message, meteor)
+            target = Vector(meteor.velocity.x * root[1] + meteor.position.x, meteor.velocity.y * root[1] + meteor.position.y)
             i = 0
-            while not (10 < target.y < 790) or not (-math.pi * 0.45 < root[0] < math.pi * 0.45):
+            while not meteor_in_shootable_range(root[0], target):
                 i += 1
                 if i > len(game_message.meteors):
                     print("Help!")
                     return []
                 self.shot_meteors.append(meteor.id)
-                meteor = self.choose_meteor()
-                root = fsolve(func, [1, 10])
-                target = Vector(meteor.velocity.x * root[1] + meteor.position.x,
-                                meteor.velocity.y * root[1] + meteor.position.y)
-            if meteor.meteorType == MeteorType.Large and meteor.id not in self.shot_meteors:
+                target = calculate_future_position(game_message, meteor)
+            if self.should_predict_meteor(meteor):
                 self.predict_meteors(meteor, root[1])
             self.shot_meteors.append(meteor.id)
-            # for meteor in game_message.meteors:
-            #     if meteor.id in self.shot_meteors:
-            #         print('\033[92m' + "id:", meteor.id)
-            #         print("size:", meteor.meteorType)
-            #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y, '\033[0m')
-            #     else:
-            #         print("id:", meteor.id)
-            #         print("size:", meteor.meteorType)
-            #         print("speed:", meteor.velocity.x, ",", meteor.velocity.y)
-            # print()
             return [
                 LookAtAction(target=target),
                 ShootAction(),
