@@ -6,6 +6,12 @@ from scipy.optimize import fsolve
 
 
 def calculate_future_position(game_message: GameMessage, meteor: Meteor):
+    """
+    Calculates when and where the meteor will collide with the bullet if the bot shot it at this game state
+    :param game_message: The game state
+    :param meteor: The meteor that would be shot
+    :return: A tuple with the first element being the angle of the cannon and the second one the time until the collision happens
+    """
     def func(x):
         return [((game_message.constants.rockets.speed * np.cos(x[0]) - meteor.velocity.x) *
                  x[1] + game_message.cannon.position.x - meteor.position.x),
@@ -16,6 +22,12 @@ def calculate_future_position(game_message: GameMessage, meteor: Meteor):
 
 
 def meteor_in_shootable_range(angle: float, position: Vector) -> bool:
+    """
+    Evaluates whether a position is within the shootable range of the gun
+    :param angle: The angle of the shot
+    :param position: The predicted position of the meteor
+    :return: Whether we should shoot the meteor
+    """
     return (10 < position.y < 790) and (-math.pi * 0.45 < angle < math.pi * 0.45)
 
 
@@ -27,7 +39,12 @@ class Bot:
         self.direction = 1
         print("Initializing your super mega duper bot")
 
-    def choose_meteor(self, game_message: GameMessage):
+    def choose_meteor(self, game_message: GameMessage) -> Meteor:
+        """
+        Chooses the best meteor to shoot on the map
+        :param game_message: The game message containing the meteors
+        :return: The chosen meteor
+        """
         if len(game_message.meteors) == 0:
             return None
         target = game_message.meteors[0]
@@ -45,7 +62,12 @@ class Bot:
                     target = meteor
         return target
 
-    def predict_meteors(self, meteor, time):
+    def predict_meteors(self, meteor, time) -> None:
+        """
+        Creates fake meteors at spots where they are predicted to be when the passed in meteor is destroyed
+        :param meteor: The meteor that has just been shot but not yet destroyed
+        :param time: The time it will take for the meteor to be destroyed
+        """
         impact_position = Vector(x=meteor.velocity.x * time + meteor.position.x,
                                  y=meteor.velocity.y * time + meteor.position.y)
         main_angle = math.atan2(meteor.velocity.y, meteor.velocity.x)
@@ -66,7 +88,11 @@ class Bot:
                     Meteor(id=predict_id, position=position, velocity=velocity, size=math.ceil(time),
                            meteorType=MeteorType.Small))
 
-    def update_predicted_meteors(self, game_message: GameMessage):
+    def update_predicted_meteors(self, game_message: GameMessage) -> None:
+        """
+        Updates the position of the predicted meteors according to their predicted velocity
+        :param game_message: Current game message
+        """
         for meteor in self.predicted_meteors:
             meteor.position.x += meteor.velocity.x
             meteor.position.y += meteor.velocity.y
@@ -80,13 +106,23 @@ class Bot:
                             self.shot_meteors.append(real_meteor.id)
                 self.predicted_meteors.remove(meteor)
         game_message.meteors.extend(self.predicted_meteors)
-        return self.choose_meteor(game_message)
 
     def should_predict_meteor(self, meteor: Meteor):
+        """
+        Evaluate whether we should attempt to predict the smaller meteors that will result from shooting a meteor
+        :param meteor: The meteor that got shot
+        :return: Whether we should shoot the meteor
+        """
         return meteor.meteorType == MeteorType.Large and meteor.id not in self.shot_meteors
 
     def get_next_move(self, game_message: GameMessage):
-        meteor = self.update_predicted_meteors(game_message)
+        """
+        Gets called every tick and decides what action the bot should make
+        :param game_message: An object containing all the data we get from the server
+        :return: The actions we will take this tick
+        """
+        self.update_predicted_meteors(game_message)
+        meteor = self.choose_meteor(game_message)
         if meteor is None:
             return []
 
