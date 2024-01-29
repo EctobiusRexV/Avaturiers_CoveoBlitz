@@ -7,10 +7,10 @@ from scipy.optimize import fsolve
 
 def calculate_future_position(game_message: GameMessage, meteor: Meteor):
     """
-    Calculates when and where the meteor will collide with the bullet if the bot shot it at this game state
+    Calculates when and where the meteor would collide with the bullet if the bot shot it at this game state
     :param game_message: The game state
     :param meteor: The meteor that would be shot
-    :return: A tuple with the first element being the angle of the cannon and the second one the time until the collision happens
+    :return: A tuple with the first element being the angle of the cannon and the second one being the time until the collision happens
     """
     def func(x):
         return [((game_message.constants.rockets.speed * np.cos(x[0]) - meteor.velocity.x) *
@@ -26,7 +26,7 @@ def meteor_in_shootable_range(angle: float, position: Vector) -> bool:
     Evaluates whether a position is within the shootable range of the gun
     :param angle: The angle of the shot
     :param position: The predicted position of the meteor
-    :return: Whether we should shoot the meteor
+    :return: Whether we should shoot the meteor or not
     """
     return (10 < position.y < 790) and (-math.pi * 0.45 < angle < math.pi * 0.45)
 
